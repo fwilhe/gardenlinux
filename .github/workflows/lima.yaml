@@ -41,15 +41,15 @@ jobs:
       - uses: ./.github/actions/setup
       # todo: version
       - name: Build the image
-        run: ./build format('{0}-{1}', ${{ needs.cname.outputs.CNAME }}, ${{ matrix.arch }})
+        run: ./build ${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}
       - uses: actions/upload-artifact@v4
         with:
-          name: format('{0}-{1}', ${{ needs.cname.outputs.CNAME }}, ${{ matrix.arch }})
-          path: .build/format('{0}-{1}', ${{ needs.cname.outputs.CNAME }}, ${{ matrix.arch }})*qcow2
+          name: ${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}
+          path: .build/${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}*qcow2
       - uses: actions/upload-artifact@v4
         with:
-          name: format('{0}-{1}', ${{ needs.cname.outputs.CNAME }}, ${{ matrix.arch }})-yaml
-          path: .build/format('{0}-{1}', ${{ needs.cname.outputs.CNAME }}, ${{ matrix.arch }})*yaml
+          name: ${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}-yaml
+          path: .build/${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}*yaml
 
   lima-manifest:
     runs-on: ubuntu-latest
