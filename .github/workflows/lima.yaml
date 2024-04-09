@@ -14,9 +14,17 @@ jobs:
       CNAME: ${{ steps.cname.outputs.CNAME }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: gardenlinux
+      - uses: actions/checkout@v4
+        with:
+          repository: 'gardenlinux/builder'
+          path: builder
+      - run: sudo apt-get -y install python3 python3-mako python3-networkx python3-pefile python3-yaml
+      - run: python builder/builder/parse_features --feature-dir gardenlinux/features --features kvm,lima,_curl cname_base | head -n1
       - id: cname
         run: |
-          CNAME=$(sudo docker run -t --rm --volume=$PWD:/gl ghcr.io/gardenlinux/builder:3ab2bb52bc46bb200c761369c087e9413d1ce0ac /builder/parse_features --feature-dir /gl/features --features kvm,lima,_curl cname_base | head -n1)
+          CNAME=$(python builder/builder/parse_features --feature-dir gardenlinux/features --features kvm,lima,_curl cname_base | head -n1)
           echo "CNAME=$CNAME" | tr -d '\n' >> "$GITHUB_OUTPUT"
   build:
     runs-on: ubuntu-latest
