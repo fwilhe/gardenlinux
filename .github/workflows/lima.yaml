@@ -64,12 +64,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ${{ needs.cname.outputs.CNAME }}-arm64-yaml
-      - run: mv kvm*amd*yaml kvm-amd64.yaml
-      - run: mv kvm*arm*yaml kvm-arm64.yaml
       - id: commit
         run: echo "COMMITID=$(git rev-parse HEAD 2> /dev/null)" >> "$GITHUB_OUTPUT"
       - run: |
           from pathlib import Path
+          import os
 
           template = """# Lima file for Garden Linux
           # See https://gardenlinux.io/ for infos on Garden Linux
@@ -91,13 +90,16 @@ jobs:
           """
 
           manifest = template\
-            .replace("__IMAGE__AMD__", Path("kvm-amd64.yaml").read_text())\
-            .replace("__IMAGE__ARM__", Path("kvm-arm64.yaml").read_text())
+            .replace("__IMAGE__AMD__", Path(os.environ["AMD_YAML_FILENAME"]).read_text())\
+            .replace("__IMAGE__ARM__", Path(os.environ["ARM_YAML_FILENAME"]).read_text())
 
           with open("lima.yaml", "w+") as file:
             file.write(manifest)
 
         shell: python
+        env:
+          AMD_YAML_FILENAME: ${{ needs.cname.outputs.CNAME }}-amd64-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
+          ARM_YAML_FILENAME: ${{ needs.cname.outputs.CNAME }}-arm64-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
 
       - uses: actions/upload-artifact@v4
         with:
