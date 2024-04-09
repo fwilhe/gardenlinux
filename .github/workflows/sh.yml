@@ -24,4 +24,4 @@ jobs:
           python builder/builder/parse_features --feature-dir gardenlinux/features --features kvm,lima,_curl --version 1312.1 --default-arch arm64 features
 
       - run: |
-          python builder/builder/parse_features --feature-dir gardenlinux/features --features _curl --version 1312.1 --default-arch arm64 graph
+          python builder/builder/parse_features --feature-dir gardenlinux/features --features kvm,lima,_curl --version 1312.1 --default-arch arm64 graph
