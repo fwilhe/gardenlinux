@@ -93,8 +93,7 @@ jobs:
 
           manifest = template\
             .replace("__IMAGE__AMD__", Path("kvm-amd64.yaml").read_text())\
-            .replace("__IMAGE__ARM__", Path("kvm-arm64.yaml").read_text())\
-            .replace("__BUILDER_CNAME__", ${{ needs.cname.outputs.CNAME }})
+            .replace("__IMAGE__ARM__", Path("kvm-arm64.yaml").read_text())
 
           with open("lima.yaml", "w+") as file:
             file.write(manifest)
