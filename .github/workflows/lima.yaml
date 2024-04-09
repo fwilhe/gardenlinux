@@ -10,6 +10,8 @@ on:
 jobs:
   cname:
     runs-on: ubuntu-latest
+    outputs:
+      handle: ${{ steps.cname.outputs.CNAME }}
     steps:
       - uses: actions/checkout@v4
       - id: cname
