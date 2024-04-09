@@ -38,7 +38,6 @@ jobs:
           ref: ${{ inputs.version }}
       # Workaround for crun version, cf https://github.com/gardenlinux/gardenlinux/pull/1982
       - uses: ./.github/actions/setup
-      # todo: version
       - name: Build the image
         run: ./build ${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}
       - uses: actions/upload-artifact@v4
@@ -77,8 +76,8 @@ jobs:
           # See https://lima-vm.io/ for infos on Lima
 
           # To create a new vm, run one of the following based on your desired architecture:
-          #  limactl create --name=gardenlinux-today https://images.gardenlinux.io/${{ needs.cname.outputs.CNAME }}-amd64-${{ steps.commit.outputs.COMMITID }}.yaml
-          #  limactl create --name=gardenlinux-today https://images.gardenlinux.io/${{ needs.cname.outputs.CNAME }}-arm64-${{ steps.commit.outputs.COMMITID }}.yaml
+          #  limactl create --name=gardenlinux-today https://images.gardenlinux.io/${{ needs.cname.outputs.CNAME }}-amd64-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
+          #  limactl create --name=gardenlinux-today https://images.gardenlinux.io/${{ needs.cname.outputs.CNAME }}-arm64-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
 
           vmType: qemu
           os: Linux
