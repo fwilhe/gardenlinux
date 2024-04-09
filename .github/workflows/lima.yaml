@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - id: cname
         run: |
-          CNAME=$(podman run -t --rm --volume=$PWD:/gl ghcr.io/gardenlinux/builder:3ab2bb52bc46bb200c761369c087e9413d1ce0ac /builder/parse_features --feature-dir /gl/features --features kvm,lima,_curl cname_base)
+          CNAME=$(podman run -t --rm --volume=$PWD:/gl ghcr.io/gardenlinux/builder:3ab2bb52bc46bb200c761369c087e9413d1ce0ac /builder/parse_features --feature-dir /gl/features --features kvm,lima,_curl cname_base | tr -d '\n')
           echo "CNAME=$CNAME" >> "$GITHUB_OUTPUT"
   build:
     runs-on: ubuntu-latest
