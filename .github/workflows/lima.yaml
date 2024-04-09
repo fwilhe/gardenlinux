@@ -67,6 +67,8 @@ jobs:
           name: ${{ needs.cname.outputs.CNAME }}-arm64-yaml
       - run: mv kvm*amd*yaml kvm-amd64.yaml
       - run: mv kvm*arm*yaml kvm-arm64.yaml
+      - id: commit
+        run: echo "COMMITID=$(git rev-parse HEAD 2> /dev/null)" >> "$GITHUB_OUTPUT"
       - run: |
           from pathlib import Path
 
@@ -74,8 +76,9 @@ jobs:
           # See https://gardenlinux.io/ for infos on Garden Linux
           # See https://lima-vm.io/ for infos on Lima
 
-          # To create a new vm, run:
-          #  limactl create --name=gardenlinux-today https://images.gardenlinux.io/__BUILDER_CNAME__-__BUILDER_COMMIT__.yaml
+          # To create a new vm, run one of the following based on your desired architecture:
+          #  limactl create --name=gardenlinux-today https://images.gardenlinux.io/${{ needs.cname.outputs.CNAME }}-amd64-${{ steps.commit.outputs.COMMITID }}.yaml
+          #  limactl create --name=gardenlinux-today https://images.gardenlinux.io/${{ needs.cname.outputs.CNAME }}-arm64-${{ steps.commit.outputs.COMMITID }}.yaml
 
           vmType: qemu
           os: Linux
@@ -90,7 +93,8 @@ jobs:
 
           manifest = template\
             .replace("__IMAGE__AMD__", Path("kvm-amd64.yaml").read_text())\
-            .replace("__IMAGE__ARM__", Path("kvm-arm64.yaml").read_text())
+            .replace("__IMAGE__ARM__", Path("kvm-arm64.yaml").read_text())\
+            .replace("__BUILDER_CNAME__", ${{ needs.cname.outputs.CNAME }})
 
           with open("lima.yaml", "w+") as file:
             file.write(manifest)
