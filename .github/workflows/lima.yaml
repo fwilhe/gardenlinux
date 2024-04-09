@@ -8,8 +8,17 @@ on:
         required: true
 
 jobs:
+  cname:
+    runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - id: cname
+      run: |
+        CNAME=$(podman run -t --rm --volume=$PWD:/gl ghcr.io/gardenlinux/builder:3ab2bb52bc46bb200c761369c087e9413d1ce0ac /builder/parse_features --feature-dir /gl/features --features kvm,lima,_curl cname_base)
+        echo "CNAME=$CNAME" >> "$GITHUB_OUTPUT"
   build:
     runs-on: ubuntu-latest
+    needs: cname
     strategy:
       fail-fast: false
       matrix:
@@ -22,29 +31,31 @@ jobs:
       - uses: ./.github/actions/setup
       # todo: version
       - name: Build the image
-        run: ./build kvm_curl-lima-${{ matrix.arch }}
+        run: ./build ${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}
       - uses: actions/upload-artifact@v4
         with:
-          name: kvm_curl-lima-${{ matrix.arch }}
-          path: .build/kvm_curl-lima-${{ matrix.arch }}*qcow2
+          name: ${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}
+          path: .build/${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}*qcow2
       - uses: actions/upload-artifact@v4
         with:
-          name: kvm_curl-lima-${{ matrix.arch }}-yaml
-          path: .build/kvm_curl-lima-${{ matrix.arch }}*yaml
+          name: ${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}-yaml
+          path: .build/${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}*yaml
 
   lima-manifest:
     runs-on: ubuntu-latest
-    needs: build
+    needs:
+      - cname
+      - build
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.version }}
       - uses: actions/download-artifact@v4
         with:
-          name: kvm_curl-lima-amd64-yaml
+          name: ${{ needs.cname.outputs.CNAME }}-amd64-yaml
       - uses: actions/download-artifact@v4
         with:
-          name: kvm_curl-lima-arm64-yaml
+          name: ${{ needs.cname.outputs.CNAME }}-arm64-yaml
       - run: mv kvm*amd*yaml kvm-amd64.yaml
       - run: mv kvm*arm*yaml kvm-arm64.yaml
       - run: |
