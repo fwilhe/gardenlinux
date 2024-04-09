@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Garden Linux version to build, for example '1443.1'
+        description: Garden Linux version to build, for example '1443.1' or 'main'. Use 'main' instead of 'today'.
         required: true
 
 jobs:
@@ -93,15 +93,16 @@ jobs:
             .replace("__IMAGE__AMD__", Path(os.environ["AMD_YAML_FILENAME"]).read_text())\
             .replace("__IMAGE__ARM__", Path(os.environ["ARM_YAML_FILENAME"]).read_text())
 
-          with open("lima.yaml", "w+") as file:
+          with open(os.environ["OUTPUT_YAML_FILENAME"], "w+") as file:
             file.write(manifest)
 
         shell: python
         env:
           AMD_YAML_FILENAME: ${{ needs.cname.outputs.CNAME }}-amd64-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
           ARM_YAML_FILENAME: ${{ needs.cname.outputs.CNAME }}-arm64-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
+          OUTPUT_YAML_FILENAME: ${{ needs.cname.outputs.CNAME }}-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
 
       - uses: actions/upload-artifact@v4
         with:
-          name: lima-manifest-${{ inputs.version }}
-          path: lima.yaml
+          name: lima-manifest-${{ needs.cname.outputs.CNAME }}-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
+          path: ${{ needs.cname.outputs.CNAME }}-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
