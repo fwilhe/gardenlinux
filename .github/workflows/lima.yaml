@@ -8,10 +8,11 @@ on:
         required: true
 
 jobs:
-  cname:
+  collect-metadata:
     runs-on: ubuntu-latest
     outputs:
       CNAME: ${{ steps.cname.outputs.CNAME }}
+      COMMIT: ${{ steps.commit.outputs.ID }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,9 +26,12 @@ jobs:
         run: |
           CNAME=$(python builder/builder/parse_features --feature-dir gardenlinux/features --features kvm,lima,_curl cname_base)
           echo "CNAME=$CNAME" >> "$GITHUB_OUTPUT"
+      - id: commit
+        run: echo "ID=$(git rev-parse HEAD 2> /dev/null)" >> "$GITHUB_OUTPUT"
+        working-directory: ./gardenlinux
   build:
     runs-on: ubuntu-latest
-    needs: cname
+    needs: collect-metadata
     strategy:
       fail-fast: false
       matrix:
@@ -39,20 +43,20 @@ jobs:
       # Workaround for crun version, cf https://github.com/gardenlinux/gardenlinux/pull/1982
       - uses: ./.github/actions/setup
       - name: Build the image
-        run: ./build ${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}
+        run: ./build ${{ needs.collect-metadata.outputs.CNAME }}-${{ matrix.arch }}
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}
-          path: .build/${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}*qcow2
+          name: ${{ needs.collect-metadata.outputs.CNAME }}-${{ matrix.arch }}
+          path: .build/${{ needs.collect-metadata.outputs.CNAME }}-${{ matrix.arch }}*qcow2
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}-yaml
-          path: .build/${{ needs.cname.outputs.CNAME }}-${{ matrix.arch }}*yaml
+          name: ${{ needs.collect-metadata.outputs.CNAME }}-${{ matrix.arch }}-yaml
+          path: .build/${{ needs.collect-metadata.outputs.CNAME }}-${{ matrix.arch }}*yaml
 
   lima-manifest:
     runs-on: ubuntu-latest
     needs:
-      - cname
+      - collect-metadata
       - build
     steps:
       - uses: actions/checkout@v4
@@ -60,12 +64,10 @@ jobs:
           ref: ${{ inputs.version }}
       - uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.cname.outputs.CNAME }}-amd64-yaml
+          name: ${{ needs.collect-metadata.outputs.CNAME }}-amd64-yaml
       - uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.cname.outputs.CNAME }}-arm64-yaml
-      - id: commit
-        run: echo "COMMITID=$(git rev-parse HEAD 2> /dev/null)" >> "$GITHUB_OUTPUT"
+          name: ${{ needs.collect-metadata.outputs.CNAME }}-arm64-yaml
       - run: |
           from pathlib import Path
           import os
@@ -75,8 +77,8 @@ jobs:
           # See https://lima-vm.io/ for infos on Lima
 
           # To create a new vm, run one of the following based on your desired architecture:
-          #  limactl create --name=gardenlinux-today https://images.gardenlinux.io/${{ needs.cname.outputs.CNAME }}-amd64-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
-          #  limactl create --name=gardenlinux-today https://images.gardenlinux.io/${{ needs.cname.outputs.CNAME }}-arm64-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
+          #  limactl create --name=gardenlinux-today https://images.gardenlinux.io/${{ needs.collect-metadata.outputs.CNAME }}-amd64-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ needs.collect-metadata.outputs.COMMIT }}.yaml
+          #  limactl create --name=gardenlinux-today https://images.gardenlinux.io/${{ needs.collect-metadata.outputs.CNAME }}-arm64-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ needs.collect-metadata.outputs.COMMIT }}.yaml
 
           vmType: qemu
           os: Linux
@@ -98,11 +100,11 @@ jobs:
 
         shell: python
         env:
-          AMD_YAML_FILENAME: ${{ needs.cname.outputs.CNAME }}-amd64-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
-          ARM_YAML_FILENAME: ${{ needs.cname.outputs.CNAME }}-arm64-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
-          OUTPUT_YAML_FILENAME: ${{ needs.cname.outputs.CNAME }}-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
+          AMD_YAML_FILENAME: ${{ needs.collect-metadata.outputs.CNAME }}-amd64-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ needs.collect-metadata.outputs.COMMIT }}.yaml
+          ARM_YAML_FILENAME: ${{ needs.collect-metadata.outputs.CNAME }}-arm64-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ needs.collect-metadata.outputs.COMMIT }}.yaml
+          OUTPUT_YAML_FILENAME: ${{ needs.collect-metadata.outputs.CNAME }}-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ needs.collect-metadata.outputs.COMMIT }}.yaml
 
       - uses: actions/upload-artifact@v4
         with:
-          name: lima-manifest-${{ needs.cname.outputs.CNAME }}-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
-          path: ${{ needs.cname.outputs.CNAME }}-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ steps.commit.outputs.COMMITID }}.yaml
+          name: lima-manifest-${{ needs.collect-metadata.outputs.CNAME }}-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ needs.collect-metadata.outputs.COMMIT }}.yaml
+          path: ${{ needs.collect-metadata.outputs.CNAME }}-${{ inputs.version == 'main' && 'today' ||  inputs.version }}-${{ needs.collect-metadata.outputs.COMMIT }}.yaml
