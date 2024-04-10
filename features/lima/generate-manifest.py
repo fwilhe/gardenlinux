@@ -54,15 +54,12 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    print("debug info:")
-    print(args.cname_base)
-    print(args.gardenlinux_version)
-    print(args.commit_id)
-
+    cname_base = args.cname_base
+    gardenlinux_version = args.gardenlinux_version
     commit_id_short = args.commit_id[0:8]
 
-    disk_image_name_amd64 = disk_image_name(args.cname_base, 'amd64', args.gardenlinux_version, commit_id_short)
-    disk_image_name_arm64 = disk_image_name(args.cname_base, 'arm64', args.gardenlinux_version, commit_id_short)
+    disk_image_name_amd64 = disk_image_name(cname_base, 'amd64', gardenlinux_version, commit_id_short)
+    disk_image_name_arm64 = disk_image_name(cname_base, 'arm64', gardenlinux_version, commit_id_short)
 
     sha_amd64 = ""
     sha_arm64 = ""
@@ -72,8 +69,8 @@ if __name__ == '__main__':
     with open(disk_image_name_arm64, 'rb', buffering=0) as f:
         sha_arm64 = hashlib.file_digest(f, 'sha256').hexdigest()
 
-    yaml_name_amd64 = yaml_name(args.cname_base, 'amd64', args.gardenlinux_version, commit_id_short)
-    yaml_name_arm64 = yaml_name(args.cname_base, 'arm64', args.gardenlinux_version, commit_id_short)
+    yaml_name_amd64 = yaml_name(cname_base, 'amd64', gardenlinux_version, commit_id_short)
+    yaml_name_arm64 = yaml_name(cname_base, 'arm64', gardenlinux_version, commit_id_short)
 
     manifest = template\
         .replace("__DISK_IMAGE_NAME_AMD__", disk_image_name_amd64)\
@@ -82,7 +79,7 @@ if __name__ == '__main__':
         .replace("__YAML_NAME_ARM__", yaml_name_arm64)\
         .replace("__SHA_AMD__", sha_amd64)\
         .replace("__SHA_ARM__", sha_arm64)\
-        .replace("__VERSION__", args.gardenlinux_version)
+        .replace("__VERSION__", gardenlinux_version)
 
-    with open(output_file_name(args.cname_base, args.gardenlinux_version, commit_id_short), "w+") as file:
+    with open(output_file_name(cname_base, gardenlinux_version, commit_id_short), "w+") as file:
         file.write(manifest)

@@ -27,7 +27,7 @@ jobs:
           CNAME=$(python builder/builder/parse_features --feature-dir gardenlinux/features --features kvm,lima,_curl cname_base)
           echo "CNAME=$CNAME" >> "$GITHUB_OUTPUT"
       - id: commit
-        run: echo "ID=$(git rev-parse HEAD 2> /dev/null)" >> "$GITHUB_OUTPUT"
+        run: echo "ID=$(head -c 8 <<< $(git rev-parse HEAD 2> /dev/null))" >> "$GITHUB_OUTPUT"
         working-directory: ./gardenlinux
   build:
     runs-on: ubuntu-latest
