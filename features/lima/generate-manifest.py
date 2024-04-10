@@ -13,7 +13,7 @@ template = """# Lima file for Garden Linux
 # See https://gardenlinux.io/ for infos on Garden Linux
 # See https://lima-vm.io/ for infos on Lima
 
-# To create a new vm, run one of the following based on your desired architecture:
+# To create a new vm:
 #  limactl create --name=gardenlinux-__VERSION__ https://images.gardenlinux.io/__YAML_NAME__
 
 vmType: qemu
