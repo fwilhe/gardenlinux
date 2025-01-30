@@ -4,7 +4,7 @@ on:
     inputs:
       version:
         type: string
-        default: today
+        default: experimental
       use_kms:
         type: boolean
         default: false
